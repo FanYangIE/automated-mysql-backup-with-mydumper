@@ -90,9 +90,9 @@ myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s oms-returned -
 
 ### Restore a database backup to another database (a new database will be created if the target database does not exist)
 
-myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s from_dbname -B to_dbname -o -d /data/mydumper/20241107131527（全备目录）
+myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s from_dbname -B to_dbname -o -d /data/mydumper/20241107131527（Full backup directory）
 
-myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -B to_dbname -o -d /data/mydumper/single_db（单库备份目录）
+myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -B to_dbname -o -d /data/mydumper/single_db（Single database backup directory）
 
 ## Optimization:
 
