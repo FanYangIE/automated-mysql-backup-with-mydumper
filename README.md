@@ -2,35 +2,35 @@
 
 This project includes how to use mydumper to back up a MySQL database, including manual backup methods and automated scripts. It also includes a solution for restoring a large MySQL database using myloader.
 
-# mydumper的安装
+# Installation of mydumper
 
-mydumper的安装的安装非常简单，在互联网上有大量的教程，这里不做介绍。
+The installation of mydumper is very simple. There are a lot of tutorials on the Internet, which will not be introduced here.
 
-## 手动备份
+## Manual backup
 
-```mydumper -h 10.2.14.26 -P 3306 -u dump_user -p dump_user -t 8 -c -G -E -R -B oms-returned,oms-sap-syncer,oms-system,oms-workflow -o /data/mysql_backup/10.2.14.26/$(date +%Y%m%d%H%M%S)```
+```mydumper -h 10.2.14.26 -P 3306 -u dump_user -p dump_user -t 8 -c -G -E -R -B db_name1,db_name2,db_name3 -o /data/mysql_backup/10.2.14.26/$(date +%Y%m%d%H%M%S)```
 
-命令中的重点参数说明：
+Description of key parameters in the command:
 
--t：线程数
+-t: number of threads
 
--G -E -R：备份触发器、events时间、存储过程&函数
+-G -E -R: backup triggers, events time, stored procedures & functions
 
--B：枚举要备份的库，用逗号隔开。
+-B: enumerate the libraries to be backed up, separated by commas.
 
--o：备份文件存放的目录位置!
+-o: directory location where the backup files are stored!
 
-### 导出某个数据库的某张表
+### Export a table from a database
 
- ```mydumper -h 10.2.18.132 -u root -P 3309 -p Mgr_test@123 -t 2 -c -G -E -R -S /data/mysql_single/mysql.sock --regex '^(oms-order\.oms_order_trace$)' -o /data/tmp```
+ ```mydumper -h 10.2.18.132 -u root -P 3309 -p password -t 2 -c -G -E -R -S /data/mysql_single/mysql.sock --regex '^(db_name\.table$)' -o /data/tmp```
 
-### 导出不同数据库的不同表
+### Export different tables from different databases
 
- ```mydumper -h 10.2.18.132 -u root -P 3309 -p Mgr_test@123 -t 2 -c -G -E -R -S /data/mysql_single/mysql.sock --regex '^(oms-order\.oms_order_trace$|db2\.table2$)' -o /data/tmp```
+ ```mydumper -h 10.2.18.132 -u root -P 3309 -p password -t 2 -c -G -E -R -S /data/mysql_single/mysql.sock --regex '^(db_name1\.table$|db_name2\.table$)' -o /data/tmp```
 
-## 自动备份
+## Automatic backup
 
-备份脚本：
+Backup script:
 
 ```
 #!/bin/bash
@@ -45,7 +45,7 @@ dbport=3306
 username=yourusername
 password=yourpassword
 threads=8
-databasename=oms-contract,oms-data
+databasename=db_name1,db_name2,db_name3
 echo -e "\n==============This is a new backup process===============\n$(date +%Y%m%d-%H:%M:%S.%3N) The current number of backups to retain is:$number，The backup will be run using $threads threads\nStart the backup process=====>" >> $backupdir/log.txt
 $tool -h $dbhost -P $dbport -u $username -p $password -t $threads -G -E -R -B $databasename -o $backupdir/$dd
 echo -e "$(date +%Y%m%d-%H:%M:%S.%3N) Backup process completed! Backup created: $backupdir/$dd" >> $backupdir/log.txt
@@ -62,54 +62,54 @@ done
 
 ```
 
-将以上自动备份源代码保存为.sh文件，并上传到备份服务器，脚本会根据填入到链接信息链接到mysql服务并运行备份进程。
+Save the above automatic backup source code as a .sh file and upload it to the backup server. The script will connect to the MySQL service according to the link information filled in and run the backup process.
 
-## 恢复数据库
+## Recovering the Database
 
-```myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -o -d /data/mysql_backup/10.2.14.26/20221107131527```
+```myloader -h 10.2.18.23 -P 3306 -u username -p password -e -t 8 -o -d /data/mysql_backup/10.2.14.26/20241107131527```
 
-命令中的重点参数说明：
+Key parameter descriptions in the command:
 
--t：线程数
+-t: number of threads
 
--o：如果要恢复的表存在，则先drop掉该表
+-o: if the table to be restored exists, drop it first
 
--v：输出模式, 0 = silent, 1 = errors, 2 = warnings, 3 = info, 默认为2
+-v: output mode, 0 = silent, 1 = errors, 2 = warnings, 3 = info, default is 2
 
--B：要还原到哪个数据库（目标库）
+-B: which database to restore to (target database)
 
--s（小写）：选择被还原的数据库（源库）
+-s (lowercase): select the database to be restored (source database)
 
--d：指定待恢复的备份文件目录
+-d: specify the backup file directory to be restored
 
--e：在恢复时开启binlog（还原到集群环境时必须开启）
+-e: enable binlog during recovery (must be enabled when restoring to a cluster environment)
 
-### 从全备中恢复指定库
+### Restore the specified database from the full backup
 
-myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s oms-returned -o -d /data/mydumper/20221107131527
+myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s oms-returned -o -d /data/mydumper/20241107131527
 
-### 将某个数据库备份还原到另一个数据库中（目标库不存在则会新建）
+### Restore a database backup to another database (a new database will be created if the target database does not exist)
 
-myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s from_dbname -B to_dbname -o -d /data/mydumper/20221107131527（全备目录）
+myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -s from_dbname -B to_dbname -o -d /data/mydumper/20241107131527（全备目录）
 
 myloader -h 10.2.18.23 -P 3306 -u proxysql -p proxysql -e -t 8 -B to_dbname -o -d /data/mydumper/single_db（单库备份目录）
 
-## 优化：
+## Optimization:
 
-myloader在导入大表（2000万记录）的时候一开始导入线程还挺多，但到了后面就剩一两个线程了，导入速度极慢，经本地测试，2000万记录的大库需要导5个小时左右。
+When myloader imports a large table (20 million records), there are many import threads at the beginning, but only one or two threads are left later. The import speed is extremely slow. According to local tests, it takes about 5 hours to import a large database with 20 million records.
 
-### 备份优化
+### Backup optimization
 
-/usr/bin/mydumper -h 10.2.14.26 -u dump_user -p dump_user -P 3306 -t 10 -c -G -E -R -F 500 -o /backup/mysql_backup/10.2.14.26/202407321334 >> /backup/mysql_backup/10.2.14.26/202407321334/log.txt
+/usr/bin/mydumper -h 10.2.14.26 -u username -p password -P 3306 -t 10 -c -G -E -R -F 500 -o /backup/mysql_backup/10.2.14.26/202407321334 >> /backup/mysql_backup/10.2.14.26/202407321334/log.txt
 
--F参数将大表分割成指定大小（单位为MB）的块，以提高恢复时的并发能力。
+The -F parameter splits large tables into blocks of a specified size (in MB) to improve the concurrency of recovery.
 
-### 恢复优化
+### Recovery optimization
 
-myloader -h 10.2.18.134 -P 3306 -u root -p test -t 32 --innodb-optimize-keys AFTER_IMPORT_ALL_TABLES -s oms-workflow --queries-per-transaction 10 -o -v 3 -d /backup/mysql_backup/10.2.14.26/202407321334
+myloader -h 10.2.18.134 -P 3306 -u username -p password -t 32 --innodb-optimize-keys AFTER_IMPORT_ALL_TABLES -s oms-workflow --queries-per-transaction 10 -o -v 3 -d /backup/mysql_backup/10.2.14.26/202407321334
 
-重要参数调整说明：
+Important parameter adjustment instructions:
 
---innodb-optimize-keys 参数用来指定导入数据时创建索引的时机， 值：AFTER_IMPORT_ALL_TABLES代表导入完表数据后再创建索引。
+The --innodb-optimize-keys parameter is used to specify the timing of creating indexes when importing data. The value: AFTER_IMPORT_ALL_TABLES means that the index will be created after the table data is imported.
 
---queries-per-transaction 参数用来指定导入时的事务大小，如果不指定，默认值是1000，也就是说1000个insert语句构成一个事务。因为我们导出时的一个insert语句中有2000条记录，所以之前的一个事务中有200万条记录，太大了，优化后把此值改为10，这样每个事务中就是2万条数据，导入数据时可以快速提交，提高并发能力。
+The --queries-per-transaction parameter is used to specify the transaction size during import. If not specified, the default value is 1000, which means that 1000 insert statements constitute a transaction. Because there are 2000 records in an insert statement during export, there were 2 million records in a previous transaction, which was too large. After optimization, this value is changed to 10, so that each transaction has 20,000 data records, which can be quickly submitted when importing data, improving concurrency.
