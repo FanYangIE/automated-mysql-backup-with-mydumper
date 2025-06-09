@@ -62,8 +62,52 @@ done
 
 ```
 
-Save the above automatic backup source code as a .sh file and upload it to the backup server. The script will connect to the MySQL service according to the link information filled in and run the backup process.
+Save the above automatic backup source code as a .sh file and upload it to the backup server. 
 
+Add the absolute path of this script to the operating system scheduled task (such as crontab of centos) to achieve automatic backup.
+
+The script will connect to the MySQL service according to the link information filled in and run the backup process.
+
+### backup logs
+
+When this script is run, it will create a log.txt file in the backup directory to record the detailed process of backing up the database and cleaning up old backup files.
+
+The log content and format will be like this:
+
+```
+==============This is a new backup process.===============
+20231206-11:32:30.826 The current number of backups to retain is：25，The backup will be run using 16
+Start the backup process=====>
+20231206-11:32:30.826 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113230
+
+==============This is a new backup process.===============
+20231206-11:33:51.948 The current number of backups to retain is：5，The backup will rbe run using 16
+Start the backup process=====>
+20231206-11:33:51.948 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113351
+
+==============This is a new backup process.===============
+20231206-11:34:12.140 The current number of backups to retain is：5，The backup will be run using 16
+Start the backup process=====>
+20231206-11:34:12.140 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113412
+
+==============This is a new backup process.===============
+20231206-11:34:48.040 The current number of backups to retain is：5，The backup will be run using 16
+Start the backup process=====>
+20231206-11:34:48.040 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113448
+
+==============This is a new backup process.===============
+20231206-11:35:07.555 The current number of backups to retain is：5，The backup will be run using 16
+Start the backup process=====>
+20231206-11:35:07.555 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113507
+
+==============This is a new backup process.===============
+20231206-11:35:56.137 The current number of backups to retain is：5，The backup will be run using 16
+Start the backup process=====>
+20231206-11:35:56.137 Backup process completed! Backup created：/data/mysql_backup/yangfan_test/20231206113556
+20231206-11:35:56.137 The oldest backup currently is：/data/mysql_backup/yangfan_test/20231206113230
+20231206-11:35:56.137 The number of backups 6 has exceeded the threshold 5 ，The oldest backup will be deleted /data/mysql_backup/yangfan_test/20231206113230
+20231206-11:35:56.137 Deleted：/data/mysql_backup/yangfan_test/20231206113230
+```
 ## Recovering the Database
 
 ```myloader -h 10.2.18.23 -P 3306 -u username -p password -e -t 8 -o -d /data/mysql_backup/10.2.14.26/20241107131527```
