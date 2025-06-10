@@ -144,16 +144,16 @@ When myloader imports a large table (20 million records), there are many import 
 
 ### Backup optimization
 
-/usr/bin/mydumper -h 10.2.14.26 -u username -p password -P 3306 -t 10 -c -G -E -R -F 500 -o /backup/mysql_backup/10.2.14.26/202407321334 >> /backup/mysql_backup/10.2.14.26/202407321334/log.txt
+/usr/bin/mydumper -h 10.2.14.26 -u username -p password -P 3306 -t 10 -c -G -E -R **-F 500** -o /backup/mysql_backup/10.2.14.26/202407321334 >> /backup/mysql_backup/10.2.14.26/202407321334/log.txt
 
-The -F parameter splits large tables into blocks of a specified size (in MB) to improve the concurrency of recovery.
+**-F** parameter splits large tables into blocks of a specified size (in MB) to improve the concurrency of recovery.
 
 ### Recovery optimization
 
-myloader -h 10.2.18.134 -P 3306 -u username -p password -t 32 --innodb-optimize-keys AFTER_IMPORT_ALL_TABLES -s oms-workflow --queries-per-transaction 10 -o -v 3 -d /backup/mysql_backup/10.2.14.26/202407321334
+myloader -h 10.2.18.134 -P 3306 -u username -p password -t 32 **--innodb-optimize-keys** AFTER_IMPORT_ALL_TABLES -s oms-workflow **--queries-per-transaction** 10 -o -v 3 -d /backup/mysql_backup/10.2.14.26/202407321334
 
 Important parameter adjustment instructions:
 
-The --innodb-optimize-keys parameter is used to specify the timing of creating indexes when importing data. The value: AFTER_IMPORT_ALL_TABLES means that the index will be created after the table data is imported.
+**--innodb-optimize-keys** parameter is used to specify the timing of creating indexes when importing data. The value: AFTER_IMPORT_ALL_TABLES means that the index will be created after the table data is imported.
 
-The --queries-per-transaction parameter is used to specify the transaction size during import. If not specified, the default value is 1000, which means that 1000 insert statements constitute a transaction. Because there are 2000 records in an insert statement during export, there were 2 million records in a previous transaction, which was too large. After optimization, this value is changed to 10, so that each transaction has 20,000 data records, which can be quickly submitted when importing data, improving concurrency.
+**--queries-per-transaction** parameter is used to specify the transaction size during import. If not specified, the default value is 1000, which means that 1000 insert statements constitute a transaction. Because there are 2000 records in an insert statement during export, there were 2 million records in a previous transaction, which was too large. After optimization, this value is changed to 10, so that each transaction has 20,000 data records, which can be quickly submitted when importing data, improving concurrency.
